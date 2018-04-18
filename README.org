@@ -1,4 +1,4 @@
-*** Simple SML like datatype in python
+*** SML like simple datatype in python
     - usage
       
       #+BEGIN_SRC python
@@ -14,8 +14,8 @@
         print( zero ) # => Zero
         print( Succ(zero) ) # => Succ [Zero, '...']
       #+END_SRC
-*** Simple Match in python
-    - useage 
+*** Simple Pattern Match in python
+    - usage 
       
       #+BEGIN_SRC python
         import dt
@@ -30,19 +30,19 @@
         print( zero ) # => Zero
         print( Succ(zero) ) # => Succ [Zero, '...']
         from Match import *
-        @matcher(Zero,False) # Zero is class ,False is not tail recursion
+        @matcher(Zero,False) # Zero is class ,False is tail recursion switch 
         def toInt(self):
             return 0
         @matcher(Succ,False)
         def toInt(self):
-            # self.nat is before mcs.Succ('nat') ,that 'nat' 
+            # self.nat is before mcs.Succ('nat') 
             return 1 + self.nat.toInt()
         one = Succ(zero)
         two = Succ(one)
         print( toInt(zero) ,toInt(two) ) # => 0 ,2
       #+END_SRC
 *** Simple tail recursion
-    - useage
+    - usage
       
       #+BEGIN_SRC python
         # todo,you can see List.py 

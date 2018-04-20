@@ -44,8 +44,6 @@ def mret(v):
     return curry_ret
 def zero(inp):
     return nil
-def uncurry(f):
-    return lambda a,b:f(a)(b)
 
 def bind(p,f):
     def cbind(inp):
@@ -250,11 +248,11 @@ def junk(inp):# unit Parser
 #for i in toPylist(tmp):
 #    print "tmp:",i
 #print "----------"
-def token(p):#parse
+def parse(p):#parse
     return bind(p,lambda v:
             bind(junk,lambda _ :
             mret ( v ) ) )
-def parse(p):#token
+def token(p):#token
     return bind(junk,lambda _ :
             bind(p,lambda v : mret (v) ))
 natural = token(nat)
@@ -281,7 +279,7 @@ def identifier(ks):
 def read(e):
     def cread(input):
         inp = toList(input)
-        result = e(inp)
+        result = parse(e)(inp)
         assert isinstance(result,Cons),"Parse not all: " + repr(result)
         if isinstance(result.hd[1] ,Nil):
             return result.hd[0]

@@ -1,7 +1,6 @@
 #coding=utf-8
-from .. import Parsec
-from Parsec  import *
-print dir()
+from Parsec import *
+print( dir() )
 kData = toList("datatype")
 kEq   = toList("=")
 kOr   = toList("|")
@@ -33,11 +32,11 @@ def {name}Init(self,{args}):
         List = self.typename[0]
         lst = toPylist(List)
         lst = map(lambda x:''.join(toPylist(x)),lst)
-        print "lst:",lst,map(type,lst)
+        print( "lst:",lst,map(type,lst) )
         args = ",".join(lst)
         tmp = map(lambda v:"    self.{v} = {v}".format(v=v),lst)
         sets = "\n".join(tmp)
-        print sets
+        print( sets )
         temp2 = temp2.format(name=name,args=args,sets=sets)
         return lambda super : (temp2 + template).format(name=name,name1=repr(name),env=env,super=super)
 CT = type("Constructor",(Constructor,),
@@ -67,7 +66,7 @@ Data = type("Data",(Expr,),
              "__repr__":Data2s,
              "toPy":Data2py,
          })
-print Data("Nat",CT("Zero"),CT("Succ","Nat"))
+print( Data("Nat",CT("Zero"),CT("Succ","Nat")) )
 
 def variable(inp):
     return identifier(keys)(inp)
@@ -86,7 +85,7 @@ def pCT(inp):
 def pC(inp):
     return alt1(pCTof,pCT)(inp)
 pCt = read(pC)
-print pCt("nat of a * b * c")
+print( pCt("nat of a * b * c") )
 def pDataType(inp):
     return bind(parse(symbol(kData)),lambda _ :
             bind(variable,lambda name : 
@@ -95,9 +94,9 @@ def pDataType(inp):
             mret ( Data(name,v) )))))(inp)
 data = read(pDataType)
 t = data("datatype Nat = Zero | Succ of Nat * b")
-print t
+print( t )
 code = t.toPy()
-print code
+print( code )
 def mylang(func):
     filename = func.__name__
     code = func.__doc__
@@ -122,12 +121,12 @@ def Nat():
     datatype Nat = Zero
                  | Succ of Nat
     """
-print Nat
-print Nat.Succ
-print Nat.Zero
-print dir(Nat)
+print( Nat )
+print( Nat.Succ )
+print( Nat.Zero )
+print( dir(Nat) )
 from Nat import *
-print Nat,Succ,Zero
+print( Nat,Succ,Zero )
 @matcher(Zero,False)
 def add1(self):
     return Succ(self)
@@ -136,7 +135,7 @@ def add1(self):
     return Succ(self)
 one = Succ(Zero())
 two = Succ(one)
-print one
+print( one )
 @matcher(Zero)
 def toInt(self,acc):
     return acc
@@ -145,5 +144,5 @@ def toInt(self,acc):
     return self.Nat.toInt(acc + 1)
 def Int(nat):
     return force(toInt(nat,0))
-print Int(one)
-print Int(two)
+print( Int(one) )
+print( Int(two) )

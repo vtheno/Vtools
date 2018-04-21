@@ -6,7 +6,8 @@ Nat = Zero | Succ('a')
 def repr0(self):
     tmp =  [getattr(self,name) for name in self.index] 
     if len(tmp) > 0 :
-        return "{} {}".format(self.__name__,repr([tmp[0],"..."]))
+        #return "{} {}".format(self.__name__,repr([tmp[0],"..."]))
+        return "{} {}".format(self.__name__,repr(tmp))
     return "{}".format(self.__name__)
 class DT(object):
     def __init__(self):
@@ -18,6 +19,9 @@ class DT(object):
             self.__setattr__(name,self.mktype(name))
             self.lines += [name]
         return object.__getattribute__(self,name)
+    def finish(self):
+        self.lines = [ ]
+fn = type(lambda :None)        
 class Constructor(DT):
     def mktype(self,name):
         def curry_mktype(*typevar):
@@ -38,8 +42,9 @@ class Constructor(DT):
         return self
     def __call__(self,f):
         for name in self.lines:
-            tmp = getattr(self,name)(f)
-            setattr(self,name,tmp)
+            if type(getattr(self,name)) == fn:
+                tmp = getattr(self,name)(f)
+                setattr(self,name,tmp)
         return self
     def __eq__(self,f):
         return self(f)
@@ -60,7 +65,8 @@ class Datatype(DT):
         return curry_mktype
 
 cs = Constructor()
-dt  =  Datatype()
+dt = Datatype()
+    
 """
 dt.Nat('a') == cs.Zero()    \
              |  cs.Succ('a')
@@ -100,4 +106,5 @@ def mk_module(kls):
     sys.modules[kls.__name__] = mod
     return mod
 """
-__all__ = ["Constructor","Datatype","dt","cs"]
+__all__ = ["Constructor","Datatype"]
+#,"dt","cs"]

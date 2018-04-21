@@ -1,5 +1,11 @@
 #coding=utf-8
-from List import *
-t = toList([1,2,3,4])
-print toPylist( Filter(lambda x:x%2==0,t) )
-
+from dt import *
+dt = Datatype()
+c = Constructor()
+dt.program('a') == c.pgm('exp')
+program = dt.program
+a_program = c.pgm
+is_program = lambda x:isinstance(x,program)
+pg = a_program('a')
+print ( pg )
+print (pg.exp,pg.index)

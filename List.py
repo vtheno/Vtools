@@ -9,7 +9,19 @@ List = tdt.List
 Nil = tcs.Nil
 nil = Nil()
 Cons = tcs.Cons
-
+@Tail
+def Helper(lst,acc=[]):
+    if lst.null():
+        return acc
+    return Helper(lst.tl,[repr(lst.hd)]+acc )
+def helper(lst):
+    return reversed(force(Helper(lst,[])))
+def toString(self):
+    if isinstance(self.tl,Nil):
+        return "[ {} ]".format(repr(self.hd))
+    temp = ','.join ( helper(self) )
+    return "[" + temp + "]"
+Cons.__repr__ = toString
 @matcher(Nil)
 def tail_toPylist(self,acc):
     return acc
@@ -18,7 +30,7 @@ def tail_toPylist(self,acc):
     return self.tl.tail_toPylist ( [self.hd]+acc )
 def toPylist(lst):
     return force( reverse(lst).tail_toPylist( [] ) ) 
-
+           
 @Tail
 def tail_toList(lst,acc):
     if lst == []:
@@ -51,7 +63,7 @@ def flip(f):
 
 def uncurry(f):
     return lambda a,b:f(a)(b)
-    
+
 @matcher(Cons)
 def tail_foldl(self,f,acc):
     return self.tl.tail_foldl(f,f(acc,self.hd))
@@ -81,6 +93,7 @@ def foldr1(f,LIST):
     return foldl1(f2,lst)
 def Concat(lst):
     return foldl (lambda a,b:a + b,nil,lst)
+           
 @matcher(Nil)
 def rev(self):
     return self
@@ -124,7 +137,6 @@ def tail_filter(self,f,acc):
 def Filter(f,LIST):
     lst = reverse(LIST)
     return force(lst.tail_filter(f,nil))
-
 @matcher(Nil)
 def element(self,obj,acc):
     return acc
@@ -145,3 +157,11 @@ def tail_length(self,acc):
 def length(lst):
     return force ( lst.tail_length (0) )
 
+__all__ = ["List","Nil","nil","Cons",
+           "toPylist",
+           "tail_toList","toList",
+           "null","flip","uncurry",
+           "foldl","foldl1",
+           "foldr","foldr1",
+           "Concat","reverse",
+           "Map","Filter","elem","length"]

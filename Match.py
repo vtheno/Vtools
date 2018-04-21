@@ -1,5 +1,5 @@
 #coding=utf-8
-__all__ = ["Tail","force","matcher","Match","env"]
+
 def Tail(func):
     def call(*args,**kw): # x
         yield func (*args,**kw)
@@ -32,3 +32,6 @@ def Match(Env={}):
     return matcher
 env = {}
 matcher = Match(env)
+def showMatchEnv():
+    print env
+__all__ = ["Tail","force","matcher","Match","showMatchEnv"]

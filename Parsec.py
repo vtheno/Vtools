@@ -1,5 +1,6 @@
 #coding=utf-8
 from Match import *
+from List import *
 """
 datatype 'a List = Nil
                  | Cons of 'a * 'a list
@@ -26,7 +27,6 @@ class Cons(List):
         #return "[ {} ,{} ]".format(repr(self.hd),self.tl)
         return "[" + temp + "]"
 """
-from List import *
 #print isinstance(Cons(1,nil),List)
 #tmp = toList([1,2,3])
 #print tmp
@@ -38,6 +38,7 @@ from List import *
 #print ( tmp + tmp )
 #print Map(lambda x:x+1,(tmp+tmp))
 #print Map(lambda x:x+1,nil)
+
 def mret(v):
     def curry_ret(inp):
         return Cons((v,inp),nil)
@@ -248,11 +249,11 @@ def junk(inp):# unit Parser
 #for i in toPylist(tmp):
 #    print "tmp:",i
 #print "----------"
-def parse(p):#parse
+def token(p):#parse
     return bind(p,lambda v:
             bind(junk,lambda _ :
             mret ( v ) ) )
-def token(p):#token
+def parse(p):#token
     return bind(junk,lambda _ :
             bind(p,lambda v : mret (v) ))
 natural = token(nat)
@@ -279,9 +280,17 @@ def identifier(ks):
 def read(e):
     def cread(input):
         inp = toList(input)
+        #print "inp:",toPylist(inp)
         result = parse(e)(inp)
         assert isinstance(result,Cons),"Parse not all: " + repr(result)
-        if isinstance(result.hd[1] ,Nil):
-            return result.hd[0]
+        if isinstance(result.hd[1] ,Nil): # second tuple
+            return result.hd[0] #first tuple
         raise Exception("Parse not all: "+repr(result))
     return cread
+
+__all__ = ["mret","zero","bind","sat","char","string","alt",
+           "seq","many","many1","sepby1","sepby","bracket",
+           "chainl1","chainr1","chainl","chainr","ops",
+           "nat","digit","lower","upper","letter","alphanum",
+           "ident","spaces","comment","first","alt1","junk",
+           "parse","token","symbol","identifier","read"]

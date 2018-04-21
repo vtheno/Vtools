@@ -33,5 +33,5 @@ def Match(Env={}):
 env = {}
 matcher = Match(env)
 def showMatchEnv():
-    print env
+    print( env )
 __all__ = ["Tail","force","matcher","Match","showMatchEnv"]

@@ -1,6 +1,8 @@
 #coding=utf-8
 from dt import *
 from Match import *
+import sys
+version = sys.version < '3'
 tdt = Datatype()
 tcs = Constructor()
 tdt.List('a') == tcs.Nil()             \
@@ -120,9 +122,12 @@ def tail_map(self,f,acc):
 def tail_map(self,f,acc):
     #print "tail_map:",self.hd
     try:
-        return self.tl.tail_map(f,Cons( apply(f,self.hd) ,acc) )
+        if version:
+            return self.tl.tail_map(f,Cons( apply(f,self.hd) ,acc) )
+        else:
+            return self.tl.tail_map(f,Cons( f(*self.hd) ,acc) )
     except:
-        return self.tl.tail_map(f,Cons( f(*self.hd) ,acc) )
+        return self.tl.tail_map(f,Cons( f(self.hd) ,acc) )
 def Map(f,LIST):
     lst = reverse(LIST)
     return force(lst.tail_map(f,nil))
@@ -156,12 +161,26 @@ def tail_length(self,acc):
     return self.tl.tail_length(acc+1)
 def length(lst):
     return force ( lst.tail_length (0) )
-
+@Tail
+def Tail_Zip(xs,ys,acc):
+    if null(xs) or null(ys):
+        return acc
+    else:
+        return Tail_Zip(xs.tl,ys.tl,Cons( (xs.hd,ys.hd) ,acc))
+def Zip(xs,ys):
+    return force(Tail_Zip(reverse(xs),reverse(ys),nil))
+def UnZip(xs):
+    x = (nil,nil)
+    def f(tup_hd,tup_tl):
+        c,b = tup_hd
+        cs,bs = tup_tl
+        return (Cons(c,cs),Cons(b,bs))
+    return foldr(f,x,xs)
 __all__ = ["List","Nil","nil","Cons",
            "toPylist",
            "tail_toList","toList",
            "null","flip","uncurry",
            "foldl","foldl1",
            "foldr","foldr1",
-           "Concat","reverse",
+           "Concat","reverse","Zip","UnZip",
            "Map","Filter","elem","length"]

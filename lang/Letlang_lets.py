@@ -1,5 +1,6 @@
 #coding=utf-8
-from List import toList,toPylist
+#from List import toList,toPylist
+from List import *
 from Match import *
 from Parsec import *
 from dt import *
@@ -20,11 +21,23 @@ dt.expression('a') ==  \
     |  c.diff_exp('exp1','exp2') \
     |  c.cons_exp('exp1','exp2') \
     |  c.nil_exp() \
-    |  c.nullp_exp('exp1') \
+    |  c.nullp_exp('exp1')  \
     |  c.car_exp('exp1') \
-    |  c.cdr_exp('exp1') \
+    |  c.cdr_exp('exp1')  \
+    |  c.list_exp('args') \
+    |  c.cond_exp('tups') \
     |  c.if_exp('exp1','exp2','exp3') \
-    |  c.let_exp('var','exp1','body_exp')
+    |  c.let_exp('bindings','body_exp')  \
+    |  c.letstar_exp('bindings','body_exp')
+#old    |  c.let_exp('var','exp1','body_exp')
+# exp1 <=> of expression
+# var  <=> of String
+# num  <=> of int expval 
+# args <=> of expression list
+# tups <=> of expression * expression list
+# cond { expression ==> expression }* end
+# bindings <=> String * expression list
+# let { identifier = expression }* in expression 
 expression = dt.expression
 is_expression = lambda x : isinstance(x,expression)
 const_exp = c.const_exp
@@ -40,8 +53,11 @@ nil_exp  = c.nil_exp
 nullp_exp = c.nullp_exp
 car_exp  = c.car_exp
 cdr_exp  = c.cdr_exp
+list_exp = c.list_exp
+cond_exp = c.cond_exp
 var_exp   = c.var_exp
 let_exp   = c.let_exp
+letstar_exp   = c.letstar_exp
 def number(inp):
     return token(nat)(inp)
 def const(inp):
@@ -106,6 +122,25 @@ def pcdr(inp):
     return bind(sym,lambda _ :
             bind(expr,lambda e:
                  mret( cdr_exp(e) )))(inp)
+def plist(inp):
+    sym = symbol(toList("list"))
+    sp = sepby(expr)(symbol(toList(",")))
+    return bind(sym,lambda _:
+            bind(sp,lambda args:
+                 mret( list_exp(args) )))(inp)
+def pcond(inp):
+    sym = symbol(toList("cond"))
+    end = symbol(toList("end"))
+    #els = symbol(toList("else"))
+    T  = symbol(toList("==>"))
+    to = bind(expr,lambda e1 :
+          bind(T,lambda _ :
+          bind(expr,lambda e2:
+               mret( (e1,e2) ) )))
+    return bind(sym,lambda _ :
+            bind( many1(to),lambda tup:
+            bind(end,lambda _ :
+                 mret( cond_exp(tup) ))))(inp)
 def nullp(inp):
     sym = symbol(toList("null?"))
     return bind(sym,lambda _:
@@ -126,8 +161,9 @@ def variable(inp):
     keylst = ["minus","zero?",
               "equal?","greate?","less?",
               "cons","nil",
-              "car","cdr","null?",
-              "let","in","if","then","else"]
+              "car","cdr","null?","list",
+              "cond","end",
+              "let","let*","in","if","then","else"]
     keylst = toList(list(map(toList,keylst)))
     return identifier(keylst)(inp)
 def var(inp):
@@ -137,17 +173,34 @@ def letexp(inp):
     let = symbol(toList("let"))
     defn = symbol(toList("="))
     In  = symbol(toList("in"))
-    return  bind(let  ,lambda _ :
-            bind(var  ,lambda var1:
-            bind(defn ,lambda _ :
-            bind(expr ,lambda e1:
-            bind(In   ,lambda _:
-            bind(expr ,lambda body:
-                mret( let_exp(var1,e1,body) )))))))(inp)
+    bindings = bind(var,lambda v:
+                bind(defn,lambda _:
+                bind(expr,lambda e:
+                     mret( (v,e) ))))
+    return bind(let,lambda _:
+            bind(many1(bindings),lambda tups:
+            bind(In,lambda _:
+            bind(expr,lambda body:
+            mret( let_exp(tups,body) )))))(inp)
+def letstar(inp):
+    let = symbol(toList("let*"))
+    defn = symbol(toList("="))
+    In  = symbol(toList("in"))
+    bindings = bind(var,lambda v:
+                bind(defn,lambda _:
+                bind(expr,lambda e:
+                     mret( (v,e) ))))
+    return bind(let,lambda _:
+            bind(many1(bindings),lambda tups:
+            bind(In,lambda _:
+            bind(expr,lambda body:
+            mret( letstar_exp(tups,body) )))))(inp)
 def Expr(inp):
     # 带 key 关键词的 解析优先级在上方 
     return alt(letexp)(
+           alt(plist)(
            alt(ifexp)(
+           alt(pcond)(
            alt(zerop)(
            alt(greatep)(
            alt(lessp)(
@@ -159,7 +212,7 @@ def Expr(inp):
            alt(pcdr)(
            alt(pcons)(
            alt(pnil)(
-           alt(var)(const) ) ) ) ) ) ) ) ) ) ))))(inp)
+           alt(var)(const)  )))))))))))))))(inp)
 def paren(inp):
     lf = symbol(toList("("))
     rf = symbol(toList(")"))
@@ -167,14 +220,14 @@ def paren(inp):
 def expr(inp):
     #return alt(paren)(Expr)(inp)
     return alt1(Expr,paren)(inp)
-print( read(const)("123").num )
-print( "diff:",read(diff)(" - ( 1 2 ) " ) )
-print( "zero?:",read(zerop)("zero? 0") )
-print( "if then else:",read(ifexp)("if 66 then 2 else 3") )
-print( "var",read(var)("then1") )
-print( "letexp:",read(letexp)("let aaa = 1 in 233") )
-print( "expr:",read(expr)("let a = 1 in 233") )
-print( "expr2:",read(expr)("let a = 1 in a") )
+#print( read(const)("123").num )
+#print( "diff:",read(diff)(" - ( 1 2 ) " ) )
+#print( "zero?:",read(zerop)("zero? 0") )
+#print( "if then else:",read(ifexp)("if 66 then 2 else 3") )
+#print( "var",read(var)("then1") )
+#print( "letexp:",read(letexp)("let aaa = 1 in 233") )
+#print( "expr:",read(expr)("let a = 1 in 233") )
+#print( "expr2:",read(expr)("let a = 1 in a") )
 dt.expval('a') == c.num_val('num') \
     | c.bool_val('bool') \
     | c.cons_val('hd','tl') \
@@ -248,7 +301,6 @@ def init_env():
 @matcher(var_exp,False)
 def __eq__(self,t):
     return self.var == t
-
 @matcher(const_exp,False)
 def value_of(self,env):
     return num_val(self.num)
@@ -270,6 +322,31 @@ def value_of(self,env):
     val1 = self.exp1.value_of(env)
     val2 = self.exp2.value_of(env)
     return cons_val(val1,val2)
+@matcher(list_exp,False)
+def value_of(self,env):
+    return value_of(foldr(cons_exp,nil_exp(),self.args),env)
+@matcher(cond_exp,False)
+def value_of(self,env):
+    #conds,acts = UnZip(self.tups)
+    """
+    for cond,act in toPylist(self.tups):
+        if expval2bool(value_of(cond,env)):
+            return value_of(act,env)
+    else:
+        raiseError("no cond be true")
+    """
+    @Tail
+    def Tail_value_Cond(lst):
+        if null(lst):
+            raiseError("no cond be true")
+        else:
+            cond,act = lst.hd
+            val = value_of(cond,env)
+            if expval2bool(val):
+                return value_of(act,env)
+            return Tail_value_Cond(lst.tl)
+    t = lambda lst:force(Tail_value_Cond(reverse(lst)))
+    return t(self.tups)
 @matcher(nullp_exp,False)
 def value_of(self,env):
     val1 = self.exp1.value_of(env)
@@ -332,68 +409,118 @@ def value_of(self,env):
     return self.exp3.value_of(env)
 @matcher(let_exp,False)
 def value_of(self,env):
+    """old
     val1 = self.exp1.value_of(env)
     return self.body_exp.value_of( extend_env(self.var,val1,env) )
+    @Tail
+    def Tail_value_Cond(lst):
+        if null(lst):
+            raiseError("no cond be true")
+        else:
+            cond,act = lst.hd
+            val = value_of(cond,env)
+            if expval2bool(val):
+                return value_of(act,env)
+            return Tail_value_Cond(lst.tl)
+    t = lambda lst:force(Tail_value_Cond(reverse(lst)))
+    """
+    @Tail
+    def tempf(lst,acc):
+        if null(lst):
+            return value_of(self.body_exp, acc )
+        else:
+            var1,exp1 = lst.hd
+            val1 = value_of(exp1,acc)
+            return tempf(lst.tl,extend_env(var1,val1,acc))
+    f = lambda lst : force(tempf(reverse(lst),env))
+    return f(self.bindings)
 @matcher(minus_exp,False)
 def value_of(self,env):
     val1 = self.exp1.value_of(env)
     num1 = expval2num(val1)
     return num_val(-num1)
 init = init_env()
-print( "expr4:",read(expr)("let a = 1 in ( if ( zero? a ) then a else 233 )").value_of(init) )
-print( "expr5:",read(expr)(
-"""
-let a = 1 in 
-( if ( zero? a )
-      then a 
-      else -( 233 a) )
-""").value_of(init) )
-print( "expr6:",read(expr)("- (- ( x 3 ) -(v i)) ").value_of(init) )
-print( "expr7:",\
-    read(expr)("""
-let x = 7
-in let y = 2
-    in let y = let x = -(x 1)
-               in -(x y)
-    in - (-(x 8) y) 
-""").value_of(init) )
-# x = 7 , y = 2 
-# x2 = x - 1 = 6, y2 = x2 - 1 = 5
-print( "ift:",read(expr)("""
-if zero? 0
-then if zero? 0
-     then 3
-     else 2
-else 1 
-""").value_of(init) )
-print( read(expr)("minus(1)").value_of(init) )
-print( read(expr)("minus(-(minus(5) 9))").value_of(empty_env()) )
-print( read(expr)("equal? 1 1").value_of(init) )
-print( read(expr)("greate? 1 1").value_of(init) )
+#print( "expr4:",read(expr)("let a = 1 in ( if ( zero? a ) then a else 233 )").value_of(init) )
+#print( "expr5:",read(expr)(
+#"""
+#let a = 1 in 
+#( if ( zero? a )
+#      then a 
+#      else -( 233 a) )
+#""").value_of(init) )
+#print( "expr6:",read(expr)("- (- ( x 3 ) -(v i)) ").value_of(init) )
+#print( "expr7:",\
+#    read(expr)("""
+#let x = 7
+#in let y = 2
+#    in let y = let x = -(x 1)
+#               in -(x y)
+#    in - (-(x 8) y) 
+#""").value_of(init) )
+## x = 7 , y = 2 
+## x2 = x - 1 = 6, y2 = x2 - 1 = 5
+#print( "ift:",read(expr)("""
+#if zero? 0
+#then if zero? 0
+#     then 3
+#     else 2
+#else 1 
+#""").value_of(init) )
+#print( read(expr)("minus(1)").value_of(init) )
+#print( read(expr)("minus(-(minus(5) 9))").value_of(empty_env()) )
+#print( read(expr)("equal? 1 1").value_of(init) )
+#print( read(expr)("greate? 1 1").value_of(init) )
+#
+#print( read(expr)("""
+#let a = 1 in 
+#if zero? a
+#then a
+#else if greate? minus(a) a
+#     then minus(a)
+#     else let b = minus(a) in 
+#          if less? a b then a else b
+#""").value_of(init) )
+#print( "---------------" )
+#print( read(expr)("cons 1 nil") )
+#print( read(expr)(
+#    """
+#let x = 4 in
+#cons x cons -(x 1) nil
+#""").value_of(init) )
+#print( read(expr)(
+#    """
+#let x = 4 in
+#cons x 
+#     cons cons -(x 1) 
+#               nil 
+#          nil
+#""").value_of(init) )
+#print( read(expr)("cdr cons 1 nil").value_of(init) )
+#print( read(expr)("null? (cons 1 nil)").value_of(init) )
+#print( read(expr)("list 1,2,3").value_of(init)  )
+#print( read(expr)("""
+#let x = 4 
+#in list if greate? x 2 then minus(x) else x,-(x 1),-(x 3)
+#""").value_of(init)  )
+#print( read(expr)("""
+#let x = 4 
+#in list if greate? x 2 then minus(x) else x,let c = -(x 1) in c,-(x 3)
+#""").value_of(init)  )
+#print( read(expr)("""
+#cond (less? 2 2) ==> 2 
+#     (less? 2 2) ==> 4
+#     zero? 0     ==> let x = 233 in x
+#end
+#""").value_of(init) )
+print ( read(expr)("""
+let x = 30
+in let x = -(x 1)
+       y = -(x 2)
+   in -(x y) 
+""" ).value_of(init) )
+print( read(letstar)("""
+let*
+ a = 233
+ b = 234
+in -(a b)""") )
 
-print( read(expr)("""
-let a = 1 in 
-if zero? a
-then a
-else if greate? minus(a) a
-     then minus(a)
-     else let b = minus(a) in 
-          if less? a b then a else b
-""").value_of(init) )
-print( "---------------" )
-print( read(expr)("cons 1 nil") )
-print( read(expr)(
-    """
-let x = 4 in
-cons x cons -(x 1) nil
-""").value_of(init) )
-print( read(expr)(
-    """
-let x = 4 in
-cons x 
-     cons cons -(x 1) 
-               nil 
-          nil
-""").value_of(init) )
-print( read(expr)("cdr cons 1 nil").value_of(init) )
-print( read(expr)("null? (cons 1 nil)").value_of(init) )

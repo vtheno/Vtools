@@ -1,5 +1,6 @@
 #coding=utf-8
-from List import toList,toPylist
+#from List import toList,toPylist
+from List import *
 from Match import *
 from Parsec import *
 from dt import *
@@ -20,11 +21,19 @@ dt.expression('a') ==  \
     |  c.diff_exp('exp1','exp2') \
     |  c.cons_exp('exp1','exp2') \
     |  c.nil_exp() \
-    |  c.nullp_exp('exp1') \
+    |  c.nullp_exp('exp1')  \
     |  c.car_exp('exp1') \
-    |  c.cdr_exp('exp1') \
+    |  c.cdr_exp('exp1')  \
+    |  c.list_exp('args') \
+    |  c.cond_exp('tups') \
     |  c.if_exp('exp1','exp2','exp3') \
     |  c.let_exp('var','exp1','body_exp')
+# exp1 <=> of expression
+# var  <=> of String
+# num  <=> of int expval 
+# args <=> of expression list
+# tups <=> of expression * expression list
+# cond { expression ==> expression }* end
 expression = dt.expression
 is_expression = lambda x : isinstance(x,expression)
 const_exp = c.const_exp
@@ -40,6 +49,8 @@ nil_exp  = c.nil_exp
 nullp_exp = c.nullp_exp
 car_exp  = c.car_exp
 cdr_exp  = c.cdr_exp
+list_exp = c.list_exp
+cond_exp = c.cond_exp
 var_exp   = c.var_exp
 let_exp   = c.let_exp
 def number(inp):
@@ -106,6 +117,25 @@ def pcdr(inp):
     return bind(sym,lambda _ :
             bind(expr,lambda e:
                  mret( cdr_exp(e) )))(inp)
+def plist(inp):
+    sym = symbol(toList("list"))
+    sp = sepby(expr)(symbol(toList(",")))
+    return bind(sym,lambda _:
+            bind(sp,lambda args:
+                 mret( list_exp(args) )))(inp)
+def pcond(inp):
+    sym = symbol(toList("cond"))
+    end = symbol(toList("end"))
+    #els = symbol(toList("else"))
+    T  = symbol(toList("==>"))
+    to = bind(expr,lambda e1 :
+          bind(T,lambda _ :
+          bind(expr,lambda e2:
+               mret( (e1,e2) ) )))
+    return bind(sym,lambda _ :
+            bind( many1(to),lambda tup:
+            bind(end,lambda _ :
+                 mret( cond_exp(tup) ))))(inp)
 def nullp(inp):
     sym = symbol(toList("null?"))
     return bind(sym,lambda _:
@@ -126,7 +156,8 @@ def variable(inp):
     keylst = ["minus","zero?",
               "equal?","greate?","less?",
               "cons","nil",
-              "car","cdr","null?",
+              "car","cdr","null?","list",
+              "cond","end",
               "let","in","if","then","else"]
     keylst = toList(list(map(toList,keylst)))
     return identifier(keylst)(inp)
@@ -147,7 +178,9 @@ def letexp(inp):
 def Expr(inp):
     # 带 key 关键词的 解析优先级在上方 
     return alt(letexp)(
+           alt(plist)(
            alt(ifexp)(
+           alt(pcond)(
            alt(zerop)(
            alt(greatep)(
            alt(lessp)(
@@ -159,7 +192,7 @@ def Expr(inp):
            alt(pcdr)(
            alt(pcons)(
            alt(pnil)(
-           alt(var)(const) ) ) ) ) ) ) ) ) ) ))))(inp)
+           alt(var)(const)  )))))))))))))))(inp)
 def paren(inp):
     lf = symbol(toList("("))
     rf = symbol(toList(")"))
@@ -248,7 +281,6 @@ def init_env():
 @matcher(var_exp,False)
 def __eq__(self,t):
     return self.var == t
-
 @matcher(const_exp,False)
 def value_of(self,env):
     return num_val(self.num)
@@ -270,6 +302,31 @@ def value_of(self,env):
     val1 = self.exp1.value_of(env)
     val2 = self.exp2.value_of(env)
     return cons_val(val1,val2)
+@matcher(list_exp,False)
+def value_of(self,env):
+    return value_of(foldr(cons_exp,nil_exp(),self.args),env)
+@matcher(cond_exp,False)
+def value_of(self,env):
+    #conds,acts = UnZip(self.tups)
+    """
+    for cond,act in toPylist(self.tups):
+        if expval2bool(value_of(cond,env)):
+            return value_of(act,env)
+    else:
+        raiseError("no cond be true")
+    """
+    @Tail
+    def Tail_value_Cond(lst):
+        if null(lst):
+            raiseError("no cond be true")
+        else:
+            cond,act = lst.hd
+            val = value_of(cond,env)
+            if expval2bool(val):
+                return value_of(act,env)
+            return Tail_value_Cond(lst.tl)
+    t = lambda lst:force(Tail_value_Cond(reverse(lst)))
+    return t(self.tups)
 @matcher(nullp_exp,False)
 def value_of(self,env):
     val1 = self.exp1.value_of(env)
@@ -397,3 +454,18 @@ cons x
 """).value_of(init) )
 print( read(expr)("cdr cons 1 nil").value_of(init) )
 print( read(expr)("null? (cons 1 nil)").value_of(init) )
+print( read(expr)("list 1,2,3").value_of(init)  )
+print( read(expr)("""
+let x = 4 
+in list if greate? x 2 then minus(x) else x,-(x 1),-(x 3)
+""").value_of(init)  )
+print( read(expr)("""
+let x = 4 
+in list if greate? x 2 then minus(x) else x,let c = -(x 1) in c,-(x 3)
+""").value_of(init)  )
+print( read(expr)("""
+cond (less? 2 2) ==> 2 
+     (less? 2 2) ==> 4
+     zero? 0     ==> let x = 233 in x
+end
+""").value_of(init) )

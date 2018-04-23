@@ -667,9 +667,3 @@ let makemult = proc (maker)
 in let times4 = proc(x) ((makemult makemult) x)
    in (times4 3)
 """).value_of(empty) )
-print( read(expr)("""
-let a = 5
-in  let p = proc (x) -(x a)
-        a = 5
-    in  -(a (p 2))
-""").value_of(empty) )

@@ -78,11 +78,7 @@ def __exit__(self,*args):
 @matcher(Cons,False)
 def __exit__(self,*args):
     pass
-"""
-lst = toList(range(999))
-with lst as (a,(b,(c,_))):
-    print a,b,c,_
-"""
+
 @matcher(Nil,False)
 def __eq__(self,a):
     if isinstance(a,Nil):

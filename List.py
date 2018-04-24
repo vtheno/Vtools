@@ -55,15 +55,34 @@ def __iter__(self):
     yield self.hd
     yield self.tl
 class unpack(object):
+    """
+    usage: 
+    with unpack(toList(list(range(9999)))) as (a,(b,_)):
+        print a,b
+    """
     def __init__(self,v):
         self.v = v
     def __enter__(self):
         return self.v
     def __exit__(self,error_type,value,traceback):
         pass
-with unpack(toList(list(range(9999)))) as (a,(b,_)):
-    print a,b
-
+@matcher(Nil,False)
+def __enter__(self):
+    return self
+@matcher(Cons,False)
+def __enter__(self):
+    return self
+@matcher(Nil,False)
+def __exit__(self,*args):
+    pass
+@matcher(Cons,False)
+def __exit__(self,*args):
+    pass
+"""
+lst = toList(range(999))
+with lst as (a,(b,(c,_))):
+    print a,b,c,_
+"""
 @matcher(Nil,False)
 def __eq__(self,a):
     if isinstance(a,Nil):

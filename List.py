@@ -11,6 +11,13 @@ List = tdt.List
 Nil = tcs.Nil
 nil = Nil()
 Cons = tcs.Cons
+@matcher(Nil,False)
+def null(self):
+    return True
+@matcher(Cons,False)
+def null(self):
+    return False
+
 @Tail
 def Helper(lst,acc=[]):
     if lst.null():
@@ -32,7 +39,6 @@ def tail_toPylist(self,acc):
     return self.tl.tail_toPylist ( [self.hd]+acc )
 def toPylist(lst):
     return force( reverse(lst).tail_toPylist( [] ) ) 
-           
 @Tail
 def tail_toList(lst,acc):
     if lst == []:
@@ -41,13 +47,22 @@ def tail_toList(lst,acc):
 def toList(lst):
     lst = list(reversed(lst))
     return force ( tail_toList(lst,nil) )
-
-@matcher(Nil,False)
-def null(self):
-    return True
+@matcher(Nil,True)
+def __iter__(self):
+    yield self
 @matcher(Cons,False)
-def null(self):
-    return False
+def __iter__(self):
+    yield self.hd
+    yield self.tl
+class unpack(object):
+    def __init__(self,v):
+        self.v = v
+    def __enter__(self):
+        return self.v
+    def __exit__(self,error_type,value,traceback):
+        pass
+with unpack(toList(list(range(9999)))) as (a,(b,_)):
+    print a,b
 
 @matcher(Nil,False)
 def __eq__(self,a):
@@ -182,5 +197,6 @@ __all__ = ["List","Nil","nil","Cons",
            "null","flip","uncurry",
            "foldl","foldl1",
            "foldr","foldr1",
+           "unpack",
            "Concat","reverse","Zip","UnZip",
            "Map","Filter","elem","length"]

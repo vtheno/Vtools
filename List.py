@@ -15,7 +15,7 @@ Cons = tcs.Cons
 def Helper(lst,acc=[]):
     if lst.null():
         return acc
-    return Helper(lst.tl,[repr(lst.hd)]+acc )
+    return Helper(lst.tl,[repr(lst.hd)]+acc)
 def helper(lst):
     return reversed(force(Helper(lst,[])))
 def toString(self):

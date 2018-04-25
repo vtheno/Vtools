@@ -4,7 +4,7 @@ from datatype import *
 from env import *
 from parse import *
 print( dir() )
-# eopl page 71
+# eopl page 80
 # value_of : Exp * Env -> ExpVal
 @matcher(Const_exp,False)
 def value_of(self,env):

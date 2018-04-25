@@ -156,7 +156,7 @@ def tail_map(self,f,acc):
             return self.tl.tail_map(f,Cons( apply(f,self.hd) ,acc) )
         else:
             return self.tl.tail_map(f,Cons( f(*self.hd) ,acc) )
-    except:
+    except TypeError:
         return self.tl.tail_map(f,Cons( f(self.hd) ,acc) )
 def Map(f,LIST):
     lst = reverse(LIST)

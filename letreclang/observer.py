@@ -4,7 +4,7 @@ from datatype import *
 from env import *
 from parse import *
 print( dir() )
-# eopl page 80
+# eopl page 83
 # value_of : Exp * Env -> ExpVal
 @matcher(Const_exp,False)
 def value_of(self,env):
@@ -53,12 +53,24 @@ def apply_procedure(proc1,val):
     raise Apply_Procedure_Error("type({}) is not procedure".format(proc1))
 @matcher(Proc_exp,False)
 def value_of(self,env):
+    # Exp * Env -> ExpVal
     return Proc_val(procedure(self.var,self.body,env))
 @matcher(Call_exp,False)
 def value_of(self,env):
     proc = expval_proc( value_of(self.exp1,env) )
-    arg  = value_of(self.exp2,env)
+    # expval_proc : ExpVal -> ProcVal
+    # proc : ProcVal 
+    arg  = value_of(self.exp2,env) # Exp * Env -> ExpVal
     return apply_procedure(proc,arg)
+@matcher(Letrec_exp,False)
+def value_of(self,env):
+    pname = self.proc_name
+    bvar = self.bvar
+    pbody = self.proc_body
+    letrec_body = self.letrec_body
+    # extend_env_rec : Var * Var * Exp * Env ~> Env
+    return value_of( letrec_body,
+            extend_env_rec(pname,bvar,pbody,env) )
 def test():
     e = empty_env()
     print( scanAndParse("66").value_of(e) )
@@ -101,6 +113,12 @@ def test():
     let add = fn(a) fn(b) -(0,-(-(0,a),b)) 
     in ((add 6666) 99999)
     """).value_of(e) )
+    print( scanAndParse("""
+    letrec double(x) = if zero?(x) 
+                       then 0 
+                       else -((double -(x,1)), -(0,2))
+    in (double 6)
+    """ ).value_of(e) )
 def repl():
     e = empty_env()
     inp = input(">> ")

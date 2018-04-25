@@ -1,9 +1,10 @@
 #coding=utf-8
 #from List import toList,toPylist
-from List import *
-from Match import *
-from Parsec import *
-from dt import *
+from lib.Match import *
+from lib.dt import *
+from lib.List import *
+from lib.Parsec import *
+
 dt = Datatype()
 c = Constructor()
 dt.program('a') == c.a_program('exp')

@@ -1,3 +1,4 @@
 from util.Parsec import *
 number = token(nat)
-print(read(number)(input(">> ")))
+#print(read(number)("6666666666666666666666666666666666666666666666666666666666666666"))
+print(read(number)("666666666666666666666666666666666666"))

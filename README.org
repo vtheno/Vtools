@@ -2,7 +2,7 @@
     - usage
       
       #+BEGIN_SRC python
-        import dt
+        from util import dt
         mdt = dt.Datatype()
         mcs = dt.Constructor()
         mdt.Nat('int') == mcs.Zero() \
@@ -18,7 +18,7 @@
     - usage 
       
       #+BEGIN_SRC python
-        import dt
+        from util import dt
         mdt = dt.Datatype()
         mcs = dt.Constructor()
         mdt.Nat('int') == mcs.Zero() \
@@ -43,7 +43,7 @@
       #+END_SRC
 *** Simple tail recursion
     - usage
-      
       #+BEGIN_SRC python
         # todo,you can see List.py 
       #+END_SRC
+*** List usage see example_list.py

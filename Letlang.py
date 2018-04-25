@@ -1,9 +1,9 @@
 #coding=utf-8
 #from List import toList,toPylist
-from lib.Match import *
-from lib.dt import *
-from lib.List import *
-from lib.Parsec import *
+from util.Match import *
+from util.dt import *
+from util.List import *
+from util.Parsec import *
 
 dt = Datatype()
 c = Constructor()

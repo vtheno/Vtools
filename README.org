@@ -29,7 +29,7 @@
         zero = Zero()
         print( zero ) # => Zero
         print( Succ(zero) ) # => Succ [Zero, '...']
-        from Match import *
+        from util.Match import *
         @matcher(Zero,False) # Zero is class ,False is tail recursion switch 
         def toInt(self):
             return 0

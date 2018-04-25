@@ -60,4 +60,21 @@ def test():
     then -(1,2)
     else -(2,1) 
     """).value_of(e) )
-test()
+    print( scanAndParse("""
+    let a = 0
+    in if zero? a
+    then let b = -(a,1)
+         in  -(b,b) 
+    else a
+    """).value_of(e) )
+def repl():
+    e = empty_env()
+    inp = input(">> ")
+    while 1:
+        if inp == ':q':
+            break
+        print( scanAndParse(inp).value_of(e) )
+        inp = input(">> ")
+if __name__ == '__main__':
+    test()
+    repl()

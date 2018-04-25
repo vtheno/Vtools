@@ -74,11 +74,11 @@ def pVar(inp):
                 mret ( Var_exp(''.join(toPylist(e)) ) ) )(inp)
 def pExpr(inp):
     return \
-        alt(pLet)(
         alt(pIf)(
+        alt(pLet)(
         alt(pZerop)(
         alt(pDiff)(
-        alt(pVar)(pConst) ))))(inp)
+        alt(pConst)(pVar) ))))(inp)
 def paren(inp):
     bk = bracket(lf)(pExpr)(rf)
     return bk(inp)

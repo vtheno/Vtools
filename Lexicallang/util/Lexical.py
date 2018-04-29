@@ -60,15 +60,6 @@ class Lexical(object):
                 return force(self.Tail_GetIdentAux(Cons(x,nil),xs))
             else:
                 raise GetIdentErr("GetIdentErr")
-    def GetTail(self,p,buf,lst):
-        if lst.null():
-            return self.implode( reverse(buf)),nil
-        else:
-            with lst as (x,xs):
-                if p(x):
-                    return self.GetTail(p,Cons(x,buf),xs)
-                else:
-                    return self.implode( reverse(buf) ),lst
     @Tail
     def Tail_GetTail(self,p,buf,lst):
         if lst.null():
@@ -79,6 +70,8 @@ class Lexical(object):
                     return self.Tail_GetTail(p,Cons(x,buf),xs)
                 else:
                     return self.implode( reverse(buf) ),lst
+    def GetTail(self,p,buf,lst):
+        return force(self.Tail_GetTail(p,buf,lst))
     @Tail
     def Tail_GetSymbol(self,spectab,tok,lst):
         if lst.null():
@@ -126,7 +119,7 @@ class Lexical(object):
 def test():
     tab = toList([ ("=",toList([">","<","="]))] )
     Lex = Lexical( tab )
-    string = "66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666"
+    string = "66"*10000
     #print len(Lex.GetNum(toList(string))[0]) == len(string)
     print( Lex.GetIdent(toList("abc123")) )
     print( Get("=",tab) )

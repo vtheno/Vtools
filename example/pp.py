@@ -1,3 +1,4 @@
+#coding=utf-8
 from util.Lexical import Lexical
 from util.List import *
 from util.Match import matcher,force,Tail
@@ -62,7 +63,7 @@ def parseAtom(toks):
         elif IsBool(op):
             return ["Bool",ToBool(op)],rest
         elif IsNum(op):
-            return ["Num",long(op)],rest
+            return ["Num",int(op)],rest
         elif IsId(op):
             return ["Id",op],rest
         elif op == '(':
@@ -93,13 +94,13 @@ inp = Lex("""
 let b = 3 in 
 if 6 + b then true else false
 """)
-print force( parseExp(inp) )
+print( force( parseExp(inp) ) )
 # if true then a else b
 def read(inp):
     return force( parseExp(Lex(inp)) )
-print read("""
+print( read("""
 let a = if true then 233 else 332 
 in (if (let c = a + a in c + a)
     then true - 1
     else false + 1)
-""")
+""") )

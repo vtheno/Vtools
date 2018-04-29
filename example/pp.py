@@ -30,7 +30,15 @@ def IsId(v):
             ] and v.isalnum()
 def IsNum(v):
     return v.isdigit()
-
+def IsBool(v):
+    return v == 'true' or v == 'false'
+class ToValueErr(Exception): pass
+def ToBool(v):
+    if v == 'true':
+        return True
+    elif v == 'false':
+        return False
+    raise ToValueErr("ToBool")
 @Tail
 def parseVar(toks):
     with toks as (var,rest):
@@ -51,10 +59,15 @@ def parseAtom(toks):
             exp1,rest2 = force( parseExp(strip("=",rest1)) )
             body,rest3 = force( parseExp(strip("in",rest2)) )
             return ["Let",var1,exp1,body],rest3
+        elif IsBool(op):
+            return ["Bool",ToBool(op)],rest
         elif IsNum(op):
             return ["Num",long(op)],rest
         elif IsId(op):
             return ["Id",op],rest
+        elif op == '(':
+            exp1,rest1 = force( parseExp(rest) )
+            return exp1,strip(')',rest1)
         else:
             raise ParseError("parseAtom")
 @Tail            
@@ -71,6 +84,9 @@ def parseRest(exp1,toks):
             if b == "+":
                 exp2,rest = force( parseAtom(bs) )
                 return parseRest(["BinOp",exp1,b,exp2],rest)
+            elif b == '-':
+                exp2,rest = force( parseAtom(bs) )
+                return parseRest(["BinOp",exp1,b,exp2],rest)
             else:
                 return (exp1,toks)
 inp = Lex("""
@@ -83,5 +99,7 @@ def read(inp):
     return force( parseExp(Lex(inp)) )
 print read("""
 let a = if true then 233 else 332 
-in a + a
+in (if (let c = a + a in c + a)
+    then true - 1
+    else false + 1)
 """)

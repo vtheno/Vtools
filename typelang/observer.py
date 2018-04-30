@@ -133,17 +133,21 @@ def repl():
     while 1:
         if inp == ':q':
             break
-        ast = read(inp)
-        print( ast )
-        print( force( ast.type_of(empty_tenv() )) )
-        print( force( ast.value_of(e) ) )
+        try:
+            ast = read(inp)
+            print( "ast:",ast )
+            print( "type:",force( ast.type_of( empty_tenv() )  ))
+        except Exception as msg:
+            print( "{}:".format(type(msg).__name__),msg )
+            inp = _input(">> ")
+            continue
+        print( "value:",force( ast.value_of(e) ) )
         inp = _input(">> ")
 def test_rec(x):
     if x == 0:
         return x
     else:
         return test_rec(x - 1)
-
 if __name__ == '__main__':
     #test()
     #print( read(input(">> ")) )

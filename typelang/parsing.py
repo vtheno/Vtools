@@ -8,12 +8,13 @@ SpecTab = toList( [ ("=",toList( [ "=",
                     ("-",toList( [">"]) ) ,
                    ]
                   )
+# == , =>,=< ,->
 Lexical = Lexical(SpecTab)
 Lex = Lexical.Lex
 #string = "a"*10000
 #inp = Lex(string)
 #print inp
-#print Lex("a -> b")
+#print Lex("a -> b") ;;=> ["a","->","b"]
 from util.dt import *
 d = Datatype()
 c = Constructor()
@@ -90,7 +91,7 @@ LetRec = "letrec"
 class ParseError(Exception): pass
 def strip(tok,toks):
     if toks.null():
-        raise ParseError
+        raise ParseError("stripError: {},{}".format(repr(tok),toks) )
     else:
         with toks as (first,rest):
             if tok == first:
@@ -153,6 +154,8 @@ def parseTypeRest(typ1,toks):
                 return (typ1,toks)
 @Tail
 def parseAtom(toks):
+    if toks.null():
+        raise ParseError("toks is null: {}".format(toks))
     with toks as (op,rest):
         if op == If:
             exp1,rest1 = force( parseExp(rest) )
@@ -219,7 +222,7 @@ def read(inp):
         if rest.null():
             return result
         else:
-            raise ParseError("not all")
+            raise ParseError("not all: {}".format(output))
 def test():
     print( read("66") )
     print( read("abc") )

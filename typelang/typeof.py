@@ -2,7 +2,7 @@
 from util.Match import *
 from parsing import *
 __all__ = ["empty_tenv","extend_tenv",
-           "apply_tenv","type_of"]
+           "apply_tenv","type_of","TypeNotMatchErr"]
 _empty_tenv = "empty-tenv"
 _extend_tenv = "extend-tenv"
 def empty_tenv():

@@ -12,6 +12,7 @@ def extend_env(var,val,env):
 def extend_env_rec(pname,bvar,body,env):
     # Var * Var * Exp * Env ~> Env
     return [extend_rec,pname,bvar,body,env]
+
 def car(lst): return lst[0]
 def cdr(lst): return lst[1:]
 def cadr(lst): return car(cdr(lst))
@@ -19,7 +20,9 @@ def caddr(lst): return car(cdr(cdr(lst)))
 def cadddr(lst):return car(cdr(cdr(cdr(lst))))
 class ApplyEnvError(Exception): pass
 from datatype import *
-def apply_env(env,search_var):
+from util.Match import *
+@Tail
+def tail_apply_env(env,search_var):
     # Env * Var -> SchemeVal
     # Env * String -> PythonVal
     if car(env) == empty:
@@ -31,7 +34,7 @@ def apply_env(env,search_var):
         if search_var == saved_var :
             return saved_val
         else:
-            return apply_env(saved_env,search_var)
+            return tail_apply_env(saved_env,search_var)
     # apply extend_rec
     elif car(env) == extend_rec:
         rec_env = cdr(env)
@@ -42,9 +45,11 @@ def apply_env(env,search_var):
         if search_var == pname :
             return Proc_val( procedure(bvar,pbody,env) )
         else:
-            return apply_env(saved_env,search_var)
+            return tail_apply_env(saved_env,search_var)
     else:
         raise ApplyEnvError("Invalid env:{}".format(env))
+def apply_env(env,search_var):
+    return force( tail_apply_env(env,search_var) )
 def init_env(): # () -> Env
     return extend_env('x',3,
             extend_env('y',7,

@@ -71,11 +71,14 @@ def IsNum(v):
     return v.isdigit()
 @Tail
 def parseVar(toks):
-    with toks as (var,rest):
-        if IsId(var):
-            return Var_exp(var),rest
-        else:
-            raise ParseError("parseVarError: {} ,{}".format(var,rest))
+    if toks.null():
+        raise ParseError("parseVarError: {} is null".format(toks))
+    else:
+        with toks as (var,rest):
+            if IsId(var):
+                return Var_exp(var),rest
+            else:
+                raise ParseError("parseVarError: {} ,{}".format(var,rest))
 @Tail
 def parseAtom(toks):
     with toks as (op,rest):
@@ -108,6 +111,11 @@ def parseAtom(toks):
             return Var_exp(op),rest
         elif op == lf:
             exp1,rest1 = force( parseExp(rest) )
+            #try:
+            #    exp2,rest2 = force(parseExp(rest1) )
+            #    return Call_exp(exp1,exp2),strip(rf,rest2)
+            #except ParseError:
+            #    return exp1,strip(rf,rest1)
             return exp1,strip(rf,rest1)
         else:
             raise ParseError("parseAtomError: {},{}".format(op,rest))

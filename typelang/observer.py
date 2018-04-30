@@ -2,7 +2,8 @@
 from util.Match import *
 from datatype import *
 from env import *
-from parse import *
+#from parse import *
+from parser import *
 print( dir() )
 # eopl page 83
 # value_of : Exp * Env -> ExpVal
@@ -71,62 +72,63 @@ def value_of(self,env):
     # extend_env_rec : Var * Var * Exp * Env ~> Env
     return value_of( letrec_body,
             extend_env_rec(pname,bvar,pbody,env) )
+
 def test():
     e = empty_env()
-    print( scanAndParse("66").value_of(e) )
-    #print( scanAndParse("abc").value_of(e) )
-    print( scanAndParse("-(1,2)").value_of(e) )
-    print( scanAndParse("zero? 0").value_of(e) )
-    print( scanAndParse("""
+    print( read("66").value_of(e) )
+    #print( read("abc").value_of(e) )
+    print( read("1 - 2").value_of(e) )
+    print( read("zero? 0").value_of(e) )
+    print( read("""
     if zero? 0 
-    then -(1,2) 
-    else -(2,1)
+    then 1 - 2
+    else 2 - 1
     """).value_of(e) )
-    print( scanAndParse("""
+    print( read("""
     let a = 1
     in if zero? a 
-    then -(1,2)
-    else -(2,1) 
+    then 1 - 2
+    else 2 - 1
     """).value_of(e) )
-    print( scanAndParse("""
+    print( read("""
     let a = 0
     in if zero? a
-    then let b = -(a,1)
-         in  -(b,b) 
+    then let b = a - 1
+         in  b - b
     else a
     """).value_of(e) )
-    print( scanAndParse("""
-    let f = fn(a) -(a,1)
-    in (f 1)
+    print( read("""
+    let f = fn(a) a - 1
+    in f (1)
     """ ).value_of(e) )
-    print( scanAndParse("""
+    print( read("""
     let makemult = fn (maker) 
                       fn (x)
-                         let a = -(0,4) in 
+                         let a = 0 - 4 in 
                          if zero? x 
                          then 0
-                         else -( ((maker maker) -(x,1)), a)
-    in let time4 = fn (x) ( (makemult makemult) x) 
-       in (time4 1)
+                         else ( maker(maker)(x - 1) ) -  a
+    in let time4 = fn(x) ( makemult(makemult)(x) )
+       in time4(2)
     """).value_of(e) )
-    print( scanAndParse("""
-    let add = fn(a) fn(b) -(0,-(-(0,a),b)) 
-    in ((add 6666) 99999)
+    print( read("""
+    let add = fn(a) fn(b) (0 - ((0 - a) - b)) 
+    in add(6666)(99999)
     """).value_of(e) )
-    print( scanAndParse("""
+    print( read("""
     letrec double(x) = if zero?(x) 
                        then 0 
-                       else -((double -(x,1)), -(0,2))
-    in (double 6)
+                       else (double (x-1)) - (0 - 2)
+    in double (6)
     """ ).value_of(e) )
 def repl():
     e = empty_env()
-    inp = input(">> ")
+    inp = raw_input(">> ")
     while 1:
         if inp == ':q':
             break
-        print( scanAndParse(inp).value_of(e) )
-        inp = input(">> ")
+        print( read(inp).value_of(e) )
+        inp = raw_input(">> ")
 if __name__ == '__main__':
     test()
     repl()

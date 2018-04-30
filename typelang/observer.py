@@ -4,6 +4,7 @@ from datatype import *
 from env import *
 #from parse import *
 from parsing import *
+from typeof import *
 print( dir() )
 # eopl page 83
 # value_of : Exp * Env -> ExpVal
@@ -134,6 +135,7 @@ def repl():
             break
         ast = read(inp)
         print( ast )
+        print( force( ast.type_of(empty_tenv() )) )
         print( force( ast.value_of(e) ) )
         inp = _input(">> ")
 def test_rec(x):
@@ -143,7 +145,7 @@ def test_rec(x):
         return test_rec(x - 1)
 
 if __name__ == '__main__':
-    test()
+    #test()
     #print( read(input(">> ")) )
     #test_rec( 99 )
     repl()

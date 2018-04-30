@@ -5,6 +5,7 @@ from util.Match import matcher,force,Tail
 SpecTab = toList( [ ("=",toList( [ "=",
                                    ">",
                                    "<"] ) ) ,
+                    ("-",toList( [">"]) ) ,
                    ]
                   )
 Lexical = Lexical(SpecTab)
@@ -12,18 +13,49 @@ Lex = Lexical.Lex
 #string = "a"*10000
 #inp = Lex(string)
 #print inp
+#print Lex("a -> b")
 from util.dt import *
 d = Datatype()
 c = Constructor()
+d.Type() == c.Int_Type() \
+    | c.Bool_Type() \
+    | c.Proc_Type('argtype','result_type')
+Type = d.Type
+Int_Type = c.Int_Type
+Bool_Type = c.Bool_Type
+Proc_Type = c.Proc_Type
+Int = Int_Type()
+Bool = Bool_Type()
+@matcher(Int_Type,False)
+def __eq__(self,other):
+    return isinstance(other,Int_Type)
+@matcher(Int_Type,False)
+def __repr__(self):
+    return "int"
+@matcher(Bool_Type,False)
+def __eq__(self,other):
+    return isinstance(other,Bool_Type)
+@matcher(Bool_Type,False)
+def __repr__(self):
+    return "bool"
+@matcher(Proc_Type,False)
+def __eq__(self,other):
+    if isinstance(other,Proc_Type):
+        return other.argtype == self.argtype and other.result_type == self.result_type
+    return False
+@matcher(Proc_Type,False)
+def __repr__(self):
+    return "( {} -> {} )".format(self.argtype,self.result_type)
+
 d.Expression() == c.Const_exp('num') \
     | c.Diff_exp('exp1','exp2') \
     | c.Zerop_exp('exp') \
     | c.If_exp('exp1','exp2','exp3') \
     | c.Var_exp('var') \
     | c.Let_exp('var','exp1','body') \
-    | c.Proc_exp('var','body') \
+    | c.Proc_exp('var','var_type','body') \
     | c.Call_exp('exp1','exp2') \
-    | c.Letrec_exp('proc_name','bvar','proc_body','letrec_body') 
+    | c.Letrec_exp('proc_name','bvar','proc_body','letrec_body','parg_type','prest_type') 
 Expression = d.Expression
 Const_exp = c.Const_exp # Int -> Exp
 Diff_exp = c.Diff_exp   # Exp * Exp -> Exp
@@ -65,10 +97,21 @@ def strip(tok,toks):
                 return rest
             else:
                 raise ParseError("stripError: {} ,{}".format(tok,toks))
-def IsId(v):
-    return v not in keywords and v.isalnum()
+
 def IsNum(v):
     return v.isdigit()
+def IsType(v):
+    return v == 'int' or v == 'bool'
+def IsId(v):
+    return v not in keywords and v.isalnum() and not IsType(v)
+class ParseToTypeErr(Exception):pass
+def ToType(s):
+    if s == 'int':
+        return Int
+    elif s == 'bool':
+        return Bool
+    else:
+        raise ParseToTypeErr("not find base type: {}".format(s))
 @Tail
 def parseVar(toks):
     if toks.null():
@@ -79,6 +122,35 @@ def parseVar(toks):
                 return Var_exp(var),rest
             else:
                 raise ParseError("parseVarError: {} ,{}".format(var,rest))
+@Tail
+def parseTypeAtom(toks):
+    if toks.null():
+        raise ParseError("parseTypeError: {} is null".format(toks))
+    else:
+        with toks as (typ,rest):
+            if IsType(typ):
+                return ToType(typ),rest
+            elif typ == lf :
+                typ1 ,rest1 = force( parseType(rest) )
+                #print typ1
+                return typ1,strip(rf,rest1)
+            else:
+                raise ParseError("parseTypeError: {} ,{}".format(var,rest))
+@Tail
+def parseType(toks):
+    typ1,rest1 = force( parseTypeAtom(toks) )
+    return parseTypeRest(typ1,rest1)
+@Tail
+def parseTypeRest(typ1,toks):
+    if toks.null():
+        return (typ1,toks)
+    else:
+        with toks as (b,rest):
+            if b == "->":
+                typ2,rest2 = force( parseTypeAtom(rest) )
+                return parseTypeRest( Proc_Type(typ1,typ2)  ,rest2)
+            else:
+                return (typ1,toks)
 @Tail
 def parseAtom(toks):
     with toks as (op,rest):
@@ -95,16 +167,19 @@ def parseAtom(toks):
         elif op == LetRec:
             pname,rest1 = force( parseVar(rest) )
             pvar,rest2 = force( parseVar(strip(lf,rest1) ) )
-            pbody,rest3 = force( parseExp(strip(Defn,strip(rf,rest2)) ) )
-            lbody,rest4 = force( parseExp(strip(In,rest3)) )
-            return Letrec_exp(pname,pvar,pbody,lbody),rest4
+            var_typ,rest3 = force( parseType( strip(":",rest2) ) )
+            res_typ,rest4 = force( parseType( strip(":",strip(rf,rest3)) ))
+            pbody,rest5 = force( parseExp( strip("=",rest4) ) )
+            lbody,rest6 = force( parseExp(strip(In,rest5)) )
+            return Letrec_exp(pname,pvar,pbody,lbody,var_typ,res_typ),rest6
         elif op == Zero:
             exp1,rest1 = force( parseExp( strip("?",rest) )  )
             return Zerop_exp(exp1),rest1
         elif op == Fn:
             var,rest1 = force( parseVar(strip(lf,rest)) )
-            body,rest2 = force( parseExp(strip(rf,rest1) ) )
-            return Proc_exp(var,body),rest2
+            var_type,rest2 = force( parseType(strip(":",rest1) ) )
+            body,rest2 = force( parseExp(strip(rf,rest2) ) )
+            return Proc_exp(var,var_type,body),rest2
         elif IsNum(op):
             return Const_exp(int(op)),rest
         elif IsId(op):
@@ -123,7 +198,6 @@ def parseAtom(toks):
 def parseExp(toks):
     exp1,rest1 = force( parseAtom(toks) )
     return parseRest(exp1,rest1)
-
 @Tail
 def parseRest(exp1,toks):
     if toks.null():
@@ -175,8 +249,17 @@ def test():
                        else (double (x - 1)) -  (0 - 2)
     in double(6)
     """) )
+    print( read("""
+    letrec double(x:int):int = if zero? x
+                               then x
+                               else (double (x - 1)) -  (0 - 2)
+    in double(6)
+    """) )
 #test()
 __all__ = ["read","test",
            "Expression","Const_exp","Diff_exp","Zerop_exp",
            "If_exp","Var_exp","Let_exp","Proc_exp","Call_exp",
-           "Letrec_exp"]
+           "Letrec_exp",
+           "Type","Int_Type","Int","Bool_Type","Bool","Proc_Type"
+           
+       ]

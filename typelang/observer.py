@@ -128,10 +128,16 @@ def repl():
         _input = raw_input
     else:
         _input = input
+    def __input():
+        s = ''
+        sys.stdout.write('>> ')
+        for line in iter(_input,''):
+            s += line+'\n'
+        return s
     e = empty_env()
-    inp = _input(">> ")
+    inp = __input()#">> ")
     while 1:
-        if inp == ':q':
+        if inp == ':q\n':
             break
         try:
             ast = read(inp)
@@ -139,10 +145,10 @@ def repl():
             print( "type:",force( ast.type_of( empty_tenv() )  ))
         except Exception as msg:
             print( "{}:".format(type(msg).__name__),msg )
-            inp = _input(">> ")
+            inp = __input()
             continue
         print( "value:",force( ast.value_of(e) ) )
-        inp = _input(">> ")
+        inp = __input()
 def test_rec(x):
     if x == 0:
         return x
